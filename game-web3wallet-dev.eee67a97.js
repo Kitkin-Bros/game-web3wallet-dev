@@ -73443,4 +73443,4 @@ function transactionComplete(tx, DEVBACKEND, backendOrderId, betId) {
   xhttp.send(JSON.stringify(data));
 }
 },{"regenerator-runtime/runtime":"KA2S","ethers":"iS6H","ethers/lib/utils":"if8b"}]},{},["Focm"], null)
-//# sourceMappingURL=/game-web3wallet/game-web3wallet-dev.eee67a97.js.map
+//# sourceMappingURL=/game-web3wallet-dev/game-web3wallet-dev.eee67a97.js.map

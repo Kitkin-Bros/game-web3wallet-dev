@@ -41,27 +41,25 @@ function processAction() {
     const data = urlParams.get("data") || "";
     const gasLimit = urlParams.get("gasLimit") || undefined;
     const gasPrice = urlParams.get("gasPrice") || undefined;
+    const betId = urlParams.get("betId") || undefined;
     const backendOrderId = urlParams.get("serverTransactionId") || undefined;
-    const BACKENDAPI = 'https://back.madbackpacks.io/api/v1/order'
     const DEVBACKEND = 'https://dev-back.bearverse.com/api/v1/order'
 
     if (action === "sign" && message) {
-        return signMessage(message, BACKENDAPI, backendOrderId);
+        return signMessage(message, DEVBACKEND, backendOrderId);
     }
 
     if (action === "send" && to && value) {
-        return sendTransaction(chainId, to, value, gasLimit, gasPrice, data, BACKENDAPI, backendOrderId);
+        return sendTransaction(chainId, to, value, gasLimit, gasPrice, data, DEVBACKEND, backendOrderId, betId);
     }
 
-    // copyToClipboard("error");
     displayResponse("Invalid URL");
-    // copyToClipboard("error");
 
     returnToApp()
 }
 
 
-async function sendTransaction(chainId, to, value, gasLimit, gasPrice, data, BACKENDAPI, backendOrderId) {
+async function sendTransaction(chainId, to, value, gasLimit, gasPrice, data, DEVBACKEND, backendOrderId, betId) {
     try {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         const network = await provider.getNetwork();
@@ -81,17 +79,11 @@ async function sendTransaction(chainId, to, value, gasLimit, gasPrice, data, BAC
             gasPrice: gasPrice ? hexlify(Number(gasPrice)) : gasPrice,
             data: data ? data : "0x",
         });
-        transactionComplete(tx, BACKENDAPI, backendOrderId)
-
-        // await copyToClipboard(tx.hash);
+        transactionComplete(tx, DEVBACKEND, backendOrderId, betId)
     } catch (error) {
-        // await copyToClipboard("error");
-        // displayResponse("Transaction Denied");
-        console.log(error)
-        transactionCancel(error, BACKENDAPI, backendOrderId)
+        transactionCancel(error, DEVBACKEND, backendOrderId)
         displayResponse("Transaction Canceled.<br>",);
 
-        // await copyToClipboard("error");
     }
 
     returnToApp()
@@ -105,12 +97,8 @@ async function signMessage(message) {
         displayResponse("Signature complete.<br><br>Copy to clipboard then continue to App", signature);
         await copyToClipboard(signature);
     } catch (error) {
-        // await copyToClipboard("error");
-        // displayResponse("Signature Denied");
-        transactionCancel(error, BACKENDAPI, backendOrderId)
+        transactionCancel(error, DEVBACKEND, backendOrderId)
         displayResponse("Transaction Canceled.<br>",);
-
-        // await copyToClipboard("error");
     }
 
     returnToApp()
@@ -152,28 +140,24 @@ function displayResponse(text, response) {
      }
 }
 
-function transactionCancel(error, BACKENDAPI, backendOrderId) {
-    if (error.code == 4001) {
-        var xhttp = new XMLHttpRequest();
-        xhttp.open('GET', `${BACKENDAPI}/${backendOrderId}/cancel/`)
+function transactionCancel(error, DEVBACKEND, backendOrderId) {
+    console.log(error)
+    var xhttp = new XMLHttpRequest();
+        xhttp.open('GET', `${DEVBACKEND}/${backendOrderId}/cancel/`)
         xhttp.onreadystatechange = function() {   
             if (this.readyState == 4 && this.status == 200) {
-            var response = this.responseText;
-            console.log(this)
-            console.log(response)
+
             }
         };
         xhttp.send();
-    }
 }
 
 
-function transactionComplete(tx, DEVBACKEND, backendOrderId) {
+function transactionComplete(tx, DEVBACKEND, backendOrderId, betId) {
     var xhttp = new XMLHttpRequest();
     xhttp.open("POST", `${DEVBACKEND}/${backendOrderId}/complete/`, ); 
     xhttp.setRequestHeader("Content-Type", "application/json");
     xhttp.onreadystatechange = function() {   
-        console.log(this.status)
         if (this.readyState == 4 && this.status == 404) {
                 displayResponse("Transaction not Found!")
             }
@@ -186,6 +170,10 @@ function transactionComplete(tx, DEVBACKEND, backendOrderId) {
             displayResponse(`Transaction Error!<br> ${this.responseText}`)
         } 
         }
-    var data = {tx_hash:tx['hash']};
+        if (betId != undefined){
+            var data = {tx_hash:tx['hash'], 'bet_player': betId};
+        }else{
+            var data = {tx_hash:tx['hash']};
+        }
     xhttp.send(JSON.stringify(data));
 }

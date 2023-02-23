@@ -73317,22 +73317,19 @@ function processAction() {
   const data = urlParams.get("data") || "";
   const gasLimit = urlParams.get("gasLimit") || undefined;
   const gasPrice = urlParams.get("gasPrice") || undefined;
+  const betId = urlParams.get("betId") || undefined;
   const backendOrderId = urlParams.get("serverTransactionId") || undefined;
   const DEVBACKEND = 'https://dev-back.bearverse.com/api/v1/order';
   if (action === "sign" && message) {
     return signMessage(message, DEVBACKEND, backendOrderId);
   }
   if (action === "send" && to && value) {
-    return sendTransaction(chainId, to, value, gasLimit, gasPrice, data, DEVBACKEND, backendOrderId);
+    return sendTransaction(chainId, to, value, gasLimit, gasPrice, data, DEVBACKEND, backendOrderId, betId);
   }
-
-  // copyToClipboard("error");
   displayResponse("Invalid URL");
-  // copyToClipboard("error");
-
   returnToApp();
 }
-async function sendTransaction(chainId, to, value, gasLimit, gasPrice, data, DEVBACKEND, backendOrderId) {
+async function sendTransaction(chainId, to, value, gasLimit, gasPrice, data, DEVBACKEND, backendOrderId, betId) {
   try {
     await new Promise(resolve => setTimeout(resolve, 1000));
     const network = await provider.getNetwork();
@@ -73354,9 +73351,8 @@ async function sendTransaction(chainId, to, value, gasLimit, gasPrice, data, DEV
       gasPrice: gasPrice ? (0, _utils.hexlify)(Number(gasPrice)) : gasPrice,
       data: data ? data : "0x"
     });
-    transactionComplete(tx, DEVBACKEND, backendOrderId);
+    transactionComplete(tx, DEVBACKEND, backendOrderId, betId);
   } catch (error) {
-    console.log(error);
     transactionCancel(error, DEVBACKEND, backendOrderId);
     displayResponse("Transaction Canceled.<br>");
   }
@@ -73411,23 +73407,19 @@ function displayResponse(text, response) {
   }
 }
 function transactionCancel(error, DEVBACKEND, backendOrderId) {
-  if (error.code == 4001) {
-    var xhttp = new XMLHttpRequest();
-    xhttp.open('GET', `${DEVBACKEND}/${backendOrderId}/cancel/`);
-    xhttp.onreadystatechange = function () {
-      if (this.readyState == 4 && this.status == 200) {
-        displayResponse('<div> Transaction Canceled </div>');
-      }
-    };
-    xhttp.send();
-  }
+  console.log(error);
+  var xhttp = new XMLHttpRequest();
+  xhttp.open('GET', `${DEVBACKEND}/${backendOrderId}/cancel/`);
+  xhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {}
+  };
+  xhttp.send();
 }
-function transactionComplete(tx, DEVBACKEND, backendOrderId) {
+function transactionComplete(tx, DEVBACKEND, backendOrderId, betId) {
   var xhttp = new XMLHttpRequest();
   xhttp.open("POST", `${DEVBACKEND}/${backendOrderId}/complete/`);
   xhttp.setRequestHeader("Content-Type", "application/json");
   xhttp.onreadystatechange = function () {
-    console.log(this.status);
     if (this.readyState == 4 && this.status == 404) {
       displayResponse("Transaction not Found!");
     }
@@ -73438,10 +73430,17 @@ function transactionComplete(tx, DEVBACKEND, backendOrderId) {
       displayResponse(`Transaction Error!<br> ${this.responseText}`);
     }
   };
-  var data = {
-    tx_hash: tx['hash']
-  };
+  if (betId != undefined) {
+    var data = {
+      tx_hash: tx['hash'],
+      'bet_player': betId
+    };
+  } else {
+    var data = {
+      tx_hash: tx['hash']
+    };
+  }
   xhttp.send(JSON.stringify(data));
 }
 },{"regenerator-runtime/runtime":"KA2S","ethers":"iS6H","ethers/lib/utils":"if8b"}]},{},["Focm"], null)
-//# sourceMappingURL=/game-web3wallet/game-web3wallet-dev.a9ceaf29.js.map
+//# sourceMappingURL=/game-web3wallet/game-web3wallet-dev.eee67a97.js.map
